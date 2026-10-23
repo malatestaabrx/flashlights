@@ -1,16 +1,16 @@
 {
-  "id": "linternas-narrativas",
+  "id": "flashlights",
   "title": "Flashlights!",
   "description": "Explore scenes with shared cursor flashlights, without tokens. For Foundry VTT 14.",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "url": "https://github.com/malatestaabrx/flashlights",
   "manifest": "https://github.com/malatestaabrx/flashlights/releases/latest/download/module.json",
-  "download": "https://github.com/malatestaabrx/flashlights/releases/download/v0.3.4/flashlights-v0.3.4.zip",
+  "download": "https://github.com/malatestaabrx/flashlights/releases/download/v0.3.5/flashlights-v0.3.5.zip",
   "readme": "README.md",
   "bugs": "https://github.com/malatestaabrx/flashlights/issues",
   "compatibility": { "minimum": "14", "maximum": "14" },
   "authors": [{ "name": "malatestaabrx" }],
   "esmodules": ["scripts/main.mjs"],
-  "styles": ["styles/linternas.css"],
+  "styles": ["styles/flashlights.css"],
   "socket": true
 }

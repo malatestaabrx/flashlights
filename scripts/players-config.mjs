@@ -1,6 +1,6 @@
 import { canIlluminate } from "./model.mjs";
 
-const ID = "linternas-narrativas";
+const ID = "flashlights";
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const openWindows = new Set();
 let pendingSave = Promise.resolve();

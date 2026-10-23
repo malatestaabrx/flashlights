@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createSettingsAccess } from "../scripts/settings-access.mjs";
 
 test("only GMs see module configuration; runtime settings and unrelated menus are preserved", () => {
-  const namespace = "linternas-narrativas";
+  const namespace = "flashlights";
   const keys = ["enabled", "radius", "softness", "gmLight", "preview", "gmOpacity", "playerPermissions"];
   const menu = { restricted: true };
   const settings = {

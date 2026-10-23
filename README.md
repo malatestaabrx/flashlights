@@ -1,6 +1,6 @@
 # Flashlights! — Foundry VTT 14
 
-Version 0.3.4. A black mask covers the players' scene. Each cursor opens a circular area visible to everyone viewing the same scene and level. Areas turn black again as the cursor moves away; exploration is not saved. No tokens are required, and flashlights ignore walls and fog of war. No dependencies. Works with any game system.
+Version 0.3.5. A black mask covers the players' scene. Each cursor opens a circular area visible to everyone viewing the same scene and level. Areas turn black again as the cursor moves away; exploration is not saved. No tokens are required, and flashlights ignore walls and fog of war. No dependencies. Works with any game system.
 
 ## Installation and testing
 
@@ -12,7 +12,7 @@ https://github.com/malatestaabrx/flashlights/releases/latest/download/module.jso
 
 Alternatively, install manually:
 
-1. Copy the `linternas-narrativas` folder to `Data/modules/` in your Foundry 14 user data directory. The manifest must be at `Data/modules/linternas-narrativas/module.json`. Modules are installed in the shared modules directory and enabled separately in each world. The internal package ID is retained to preserve existing settings and world activation.
+1. Copy the `flashlights` folder to `Data/modules/` in your Foundry 14 user data directory. The manifest must be at `Data/modules/flashlights/module.json`. Modules are installed in the shared modules directory and enabled separately in each world.
 2. Restart Foundry if it was running. Open your world and enable **Flashlights!** in **Manage Modules**.
 3. Use a scene with a background image and darkness set to 0 to see its original colors. While flashlights are enabled, the module treats token vision as disabled on all clients, even if it is checked in the scene settings. The saved value remains unchanged and takes effect again when flashlights are disabled. This also applies when scenes are loaded, created, or updated.
 All module settings and the player-assignment menu are visible only to GMs. Players cannot open the assignment window or use the GM configuration API.
@@ -28,19 +28,23 @@ Scene panning is handled entirely by Foundry. The module does not cancel or over
 
 The interface, chat, and windows remain accessible. The GM view and opacity settings are local browser preferences. The module works on the scene canvas; it does not darken image popouts or journal pages. It is a narrative visual effect, not an image access control mechanism.
 
+## Upgrading from the former package ID
+
+Version 0.3.5 uses the package ID `flashlights`. Earlier versions used `linternas-narrativas` and are separate packages in Foundry. Install the new package, disable the old package, and enable only `flashlights` in Manage Modules. Do not run both together. The module imports saved world settings, player flashlight assignments, and each GM browser's preview preferences the first time it runs. Existing settings under `flashlights` take precedence. Older settings are retained so the previous package can still be restored if needed. Macros must use the new `flashlights` ID.
+
 ## Script macros (GM)
 
 Toggle flashlights globally:
 
 ```js
-const api = game.modules.get("linternas-narrativas").api;
-await api.setEnabled(!game.settings.get("linternas-narrativas", "enabled"));
+const api = game.modules.get("flashlights").api;
+await api.setEnabled(!game.settings.get("flashlights", "enabled"));
 ```
 
 Toggle the GM's player preview:
 
 ```js
-await game.modules.get("linternas-narrativas").api.preview();
+await game.modules.get("flashlights").api.preview();
 ```
 
 ## Validation

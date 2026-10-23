@@ -30,7 +30,7 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   };
   const users = new Map([["self", { id: "self", active: true }], ["other", { id: "other", active: true }]]);
   globalThis.game = {
-    user: { id: "self", isGM: false }, users, modules: new Map([["linternas-narrativas", {}]]),
+    user: { id: "self", isGM: false }, users, modules: new Map([["flashlights", {}]]),
     settings: {
       settings: new Map(), menus: new Map(),
       registerMenu(id, key, options) { this.menus.set(`${id}.${key}`, options); },
@@ -71,10 +71,10 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   const transmit = () => [...intervals.values()][0]();
   await import("../scripts/main.mjs");
   hooks.get("init")();
-  hooks.get("ready")();
+  await hooks.get("ready")();
   assert.equal([...definitions.values()].some(definition => definition.config), false,
     "players see none of the module settings, including GM client preferences");
-  assert.equal(game.settings.menus.has("linternas-narrativas.players"), false);
+  assert.equal(game.settings.menus.has("flashlights.players"), false);
   assert.ok(overlay);
   assert.equal(canvas.scene.tokenVision, false);
   assert.equal(canvas.scene._source.tokenVision, true, "does not modify saved token vision");
@@ -97,7 +97,7 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   zoom = 2;
   animate();
   assert.deepEqual(drawing.at(-1), { x: 300, y: 400, r: 400 });
-  await game.settings.set("linternas-narrativas", "playerPermissions", { self: false });
+  await game.settings.set("flashlights", "playerPermissions", { self: false });
   assert.equal(socketMessages.at(-1).type, "hide", "revoking a local flashlight immediately hides it for peers");
   drawing.length = 0;
   animate();
@@ -106,7 +106,7 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   const messagesWithoutFlashlight = socketMessages.length;
   transmit();
   assert.equal(socketMessages.length, messagesWithoutFlashlight, "disabled players do not broadcast movement");
-  await game.settings.set("linternas-narrativas", "playerPermissions", { self: false, other: false });
+  await game.settings.set("flashlights", "playerPermissions", { self: false, other: false });
   drawing.length = 0;
   animate();
   assert.equal(drawing.filter(d => typeof d === "object").length, 0,
@@ -116,7 +116,7 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   animate();
   assert.equal(drawing.filter(d => typeof d === "object").length, 0,
     "movement packets cannot restore a disabled flashlight");
-  await game.settings.set("linternas-narrativas", "playerPermissions", {});
+  await game.settings.set("flashlights", "playerPermissions", {});
   receiver({ v: 1, type: "move", userId: "other", sceneId: "scene", levelId: "level", x: 900, y: 200 });
   transmit();
   boardTarget = false;
@@ -126,9 +126,9 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   hooks.get("updateUser")(game.user);
   assert.equal(definitions.get("preview").config, true);
   assert.equal(definitions.get("gmOpacity").config, true);
-  assert.equal(game.settings.menus.has("linternas-narrativas.players"), true);
-  await game.settings.set("linternas-narrativas", "preview", true);
-  await game.settings.set("linternas-narrativas", "gmOpacity", 0.4);
+  assert.equal(game.settings.menus.has("flashlights.players"), true);
+  await game.settings.set("flashlights", "preview", true);
+  await game.settings.set("flashlights", "gmOpacity", 0.4);
   drawing.length = 0;
   animate();
   assert.equal(fills.at(-1), "rgba(0,0,0,0.4)");
@@ -139,26 +139,26 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   drawing.length = 0;
   animate();
   assert.equal(drawing.filter(d => typeof d === "object").length, 1, "the GM sees only the shared player flashlight");
-  await game.settings.set("linternas-narrativas", "gmLight", true);
+  await game.settings.set("flashlights", "gmLight", true);
   drawing.length = 0;
   animate();
   assert.equal(drawing.filter(d => typeof d === "object").length, 2, "the GM adds their own flashlight when sharing is enabled");
   for (const opacity of [0, 1]) {
-    await game.settings.set("linternas-narrativas", "gmOpacity", opacity);
+    await game.settings.set("flashlights", "gmOpacity", opacity);
     animate();
     assert.equal(fills.at(-1), `rgba(0,0,0,${opacity})`);
   }
   game.user.isGM = false;
-  await game.settings.set("linternas-narrativas", "gmOpacity", 0);
+  await game.settings.set("flashlights", "gmOpacity", 0);
   animate();
   assert.equal(fills.at(-1), "rgba(0,0,0,1)", "players always have opaque darkness");
   hooks.get("canvasTearDown")();
   assert.equal(drawing.at(-1), "black", "switching scenes closes all openings immediately");
-  await game.settings.set("linternas-narrativas", "enabled", false);
+  await game.settings.set("flashlights", "enabled", false);
   assert.equal(overlay, null);
   assert.equal(frames.size, 0);
   assert.equal(intervals.size, 0);
   assert.equal(canvas.scene.tokenVision, true, "disabling flashlights restores original vision");
   assert.equal(redraws, 2);
-  assert.throws(() => game.modules.get("linternas-narrativas").api.setEnabled(true), /GM/);
+  assert.throws(() => game.modules.get("flashlights").api.setEnabled(true), /GM/);
 });

@@ -2,14 +2,16 @@ import { BeamStore, contains, interpolate, canIlluminate } from "./model.mjs";
 import { installVisionOverride, syncSceneVision, darknessOpacity } from "./vision.mjs";
 import { PlayerFlashlightsConfig, refreshPlayerWindows } from "./players-config.mjs";
 import { createSettingsAccess } from "./settings-access.mjs";
+import { LEGACY_ID, migrateLegacySettings } from "./migration.mjs";
 
-const ID = "linternas-narrativas";
+const ID = "flashlights";
 const CHANNEL = `module.${ID}`;
 const store = new BeamStore();
 let mask, ctx, frame, networkTimer, pointer = null, sceneId = null, levelId = null;
 let local = null, lastSent = null, lastSentAt = 0, lastDrawing = "", dirty = true;
 let started = false, drawingReady = false;
 let updateConfigurationAccess;
+let legacyConflict = false;
 const setting = key => game.settings.get(ID, key);
 const running = () => started && setting("enabled");
 const preview = () => game.user.isGM && setting("preview");
@@ -18,6 +20,7 @@ const sharing = () => running() && canIlluminate(game.user, setting("playerPermi
 const board = () => document.getElementById("board");
 
 Hooks.once("init", () => {
+  if (game.modules.get(LEGACY_ID)?.active) { legacyConflict = true; return; }
   // The current user is not available during init. Expose settings after user setup.
   const options = { scope: "world", config: false, restricted: true, onChange: refresh };
   game.settings.register(ID, "playerPermissions", { ...options, config: false,
@@ -56,7 +59,16 @@ Hooks.on("updateUser", user => {
   if (user.id === game.user?.id) updateConfigurationAccess?.();
 });
 
-Hooks.once("ready", () => {
+Hooks.once("ready", async () => {
+  if (legacyConflict) {
+    if (game.user.isGM) ui.notifications.error("Flashlights!: disable the legacy module (linternas-narrativas) and keep only flashlights enabled in Manage Modules.");
+    return;
+  }
+  try { await migrateLegacySettings(game); }
+  catch (error) {
+    console.error(`${ID} | Failed to import legacy settings`, error);
+    ui.notifications.warn("Flashlights!: could not import all previous settings. Review the module configuration.");
+  }
   started = true;
   updateConfigurationAccess();
   game.socket.on(CHANNEL, receive);
