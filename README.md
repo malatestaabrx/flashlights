@@ -23,7 +23,3 @@ All settings are GM-only, under **Configure Settings → Flashlights!**:
 - Preview the players' view as GM, with darkness opacity from **0** (transparent) to **1** (fully black).
 
 Use a scene background with darkness set to **0** for its original colors. Token vision is temporarily ignored while flashlights are enabled; the saved scene setting is preserved.
-
-## Upgrading from the old ID
-
-If you used `linternas-narrativas`, disable that module and enable only `flashlights`. Saved settings and player assignments are imported automatically.
