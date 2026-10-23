@@ -17,6 +17,8 @@ const running = () => started && setting("enabled");
 const preview = () => game.user.isGM && setting("preview");
 const masked = () => running() && (!game.user.isGM || preview());
 const sharing = () => running() && canIlluminate(game.user, setting("playerPermissions"), setting("gmLight"));
+const sharedVision = () => setting("shareVision") === "shared";
+const broadcasting = () => sharing() && sharedVision();
 const board = () => document.getElementById("board");
 
 Hooks.once("init", () => {
@@ -27,12 +29,18 @@ Hooks.once("init", () => {
     type: Object, default: {}, onChange: () => { refresh(); refreshPlayerWindows(); } });
   game.settings.registerMenu(ID, "players", {
     name: "Player flashlights", label: "Configure connected players",
-    hint: "Choose who has a flashlight. Players without one still see their teammates' light.",
+    hint: "Choose who has a flashlight. Players without one see teammates' light only in Shared vision mode.",
     icon: "fa-solid fa-lightbulb", type: PlayerFlashlightsConfig, restricted: true
   });
   game.settings.register(ID, "enabled", { ...options, name: "Enable flashlights",
-    hint: "Darkens scenes and shares cursor flashlights. While enabled, token vision is ignored without changing the saved scene settings.",
+    hint: "Darkens scenes and enables cursor flashlights. While enabled, token vision is ignored without changing the saved scene settings.",
     type: Boolean, default: true });
+  game.settings.register(ID, "shareVision", { ...options, name: "Share flashlight vision",
+    hint: "Shared: players see their own flashlight and those of their teammates. Individual: each player sees only their own flashlight; players without one see no illuminated areas.",
+    type: String, default: "shared", choices: {
+      shared: "Enabled — shared flashlights",
+      individual: "Disabled — own flashlight only"
+    } });
   game.settings.register(ID, "radius", { ...options, name: "Flashlight radius (scene pixels)",
     hint: "Scales with zoom. A radius of 200 reveals a circle 400 pixels across on the scene image.",
     type: Number, default: 200, range: { min: 20, max: 2000, step: 10 } });
@@ -40,10 +48,10 @@ Hooks.once("init", () => {
     hint: "0 gives a sharp circle. 20 softens the outer 20% of the radius.",
     type: Number, default: 20, range: { min: 0, max: 80, step: 5 } });
   game.settings.register(ID, "gmLight", { ...options, name: "Share the GM flashlight",
-    hint: "Shares the flashlight around the GM cursor with the players.",
+    hint: "Enables the GM flashlight. It is visible to players only when Share flashlight vision is enabled.",
     type: Boolean, default: false });
   game.settings.register(ID, "preview", { ...options, scope: "client", name: "View as players (GM)",
-    hint: "Shows the same shared flashlights, using the darkness opacity below. The GM cursor only illuminates the scene if Share the GM flashlight is enabled.",
+    hint: "Uses the selected vision mode and the darkness opacity below. In Individual mode, only the GM flashlight is shown, if enabled.",
     type: Boolean, default: false });
   game.settings.register(ID, "gmOpacity", { ...options, scope: "client", name: "GM darkness opacity",
     hint: "Applies when View as players is enabled. 0: no darkening. 1: fully black, as seen by players. Only affects this GM browser.",
@@ -119,7 +127,8 @@ function refresh() {
     hideLocal();
     store.beams.clear();
   }
-  if (!sharing() && lastSent) sendHide();
+  if (!broadcasting() && lastSent) sendHide();
+  if (!sharedVision()) store.beams.clear();
   store.prune(game.users, performance.now(), setting("gmLight"), setting("playerPermissions"));
   if (masked()) ensureMask();
   else { mask?.remove(); mask = ctx = null; }
@@ -182,7 +191,7 @@ function updateLocal() {
 
 function transmit() {
   updateLocal();
-  if (!sharing() || !local) { if (lastSent) sendHide(); return; }
+  if (!broadcasting() || !local) { if (lastSent) sendHide(); return; }
   const now = performance.now();
   if (lastSent && lastSent.x === local.x && lastSent.y === local.y && now - lastSentAt < 500) return;
   const message = { v: 1, type: "move", userId: game.user.id, sceneId, levelId, x: local.x, y: local.y };
@@ -192,7 +201,7 @@ function transmit() {
 }
 
 function receive(message) {
-  if (!running() || !drawingReady || !sceneId) return;
+  if (!running() || !sharedVision() || !drawingReady || !sceneId) return;
   if (store.receive(message, { sceneId, levelId, rect: canvas.dimensions?.sceneRect,
     users: game.users, ownId: game.user.id, gmLight: setting("gmLight"),
     playerPermissions: setting("playerPermissions"), now: performance.now() })) dirty = true;
@@ -205,7 +214,7 @@ function tick(now) {
   if (mask) {
     const points = [];
     if (drawingReady && canvas.ready) {
-      for (const beam of store.beams.values()) points.push(interpolate(beam, now));
+      if (sharedVision()) for (const beam of store.beams.values()) points.push(interpolate(beam, now));
       if (local && sharing()) points.push(local);
     }
     const circles = points.map(point => {

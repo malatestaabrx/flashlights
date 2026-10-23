@@ -94,6 +94,32 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   drawing.length = 0;
   animate();
   assert.equal(drawing.filter(d => typeof d === "object").length, 2);
+  await game.settings.set("flashlights", "shareVision", "individual");
+  assert.equal(socketMessages.at(-1).type, "hide", "switching to individual vision withdraws shared light");
+  drawing.length = 0;
+  animate();
+  assert.deepEqual(drawing.filter(d => typeof d === "object"), [{ x: 300, y: 400, r: 200 }],
+    "individual vision keeps the local flashlight but removes remote openings");
+  const privateMessages = socketMessages.length;
+  transmit();
+  assert.equal(socketMessages.length, privateMessages, "individual vision does not broadcast cursor movement");
+  receiver({ v: 1, type: "move", userId: "other", sceneId: "scene", levelId: "level", x: 900, y: 200 });
+  animate();
+  assert.equal(drawing.filter(d => typeof d === "object").length, 1,
+    "in-flight remote messages cannot reveal another flashlight in individual vision");
+  await game.settings.set("flashlights", "playerPermissions", { self: false });
+  drawing.length = 0;
+  animate();
+  assert.equal(drawing.filter(d => typeof d === "object").length, 0,
+    "a player without a flashlight sees no openings in individual vision");
+  await game.settings.set("flashlights", "playerPermissions", {});
+  await game.settings.set("flashlights", "shareVision", "shared");
+  transmit();
+  assert.equal(socketMessages.at(-1).type, "move", "shared mode resumes without a browser reload");
+  receiver({ v: 1, type: "move", userId: "other", sceneId: "scene", levelId: "level", x: 900, y: 200 });
+  drawing.length = 0;
+  animate();
+  assert.equal(drawing.filter(d => typeof d === "object").length, 2);
   zoom = 2;
   animate();
   assert.deepEqual(drawing.at(-1), { x: 300, y: 400, r: 400 });
@@ -143,6 +169,12 @@ test("mask, cursor, synchronization, zoom, and cleanup in a simulated client", a
   drawing.length = 0;
   animate();
   assert.equal(drawing.filter(d => typeof d === "object").length, 2, "the GM adds their own flashlight when sharing is enabled");
+  await game.settings.set("flashlights", "shareVision", "individual");
+  drawing.length = 0;
+  animate();
+  assert.equal(drawing.filter(d => typeof d === "object").length, 1,
+    "the GM preview follows individual vision and shows only the GM flashlight");
+  await game.settings.set("flashlights", "shareVision", "shared");
   for (const opacity of [0, 1]) {
     await game.settings.set("flashlights", "gmOpacity", opacity);
     animate();
