@@ -1,0 +1,19 @@
+<div class="flashlights-players">
+  <p>Choose which connected players have a flashlight. Changes are saved automatically.</p>
+  <p>Players without a flashlight can still see the areas illuminated by their teammates. New players have a flashlight by default. Choices are remembered after reconnecting.</p>
+  <button type="button" data-action="refreshPlayers"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Refresh player list</button>
+  <table>
+    <thead><tr><th>Connected player</th><th>Has a flashlight</th></tr></thead>
+    <tbody>
+      {{#each players}}
+      <tr>
+        <td><label for="flashlights-player-{{id}}">{{name}}</label></td>
+        <td><input id="flashlights-player-{{id}}" name="player.{{id}}" data-user-id="{{id}}" type="checkbox" {{#if enabled}}checked{{/if}}></td>
+      </tr>
+      {{else}}
+      <tr><td colspan="2">No players are connected.</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+  <p class="hint">The list updates when players connect or disconnect. The GM flashlight is controlled separately by Share the GM flashlight.</p>
+</div>
